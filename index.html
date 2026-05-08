@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTX 4.0 – Chuẩn hóa Chuỗi Cung ứng Nông sản Việt Nam</title>
+  <meta name="description"
+    content="Hợp tác xã 4.0: Mô hình liên kết chuỗi từ cánh đồng đến bàn ăn. Ứng dụng IoT, Blockchain và chuyển đổi số cho nông nghiệp Việt Nam.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <!-- ═══════════════ NAVIGATION ═══════════════ -->
+  <nav>
+    <div class="nav-logo">🌾 HTX 4.0</div>
+    <ul class="nav-links">
+      <li><a href="#compare">So sánh</a></li>
+      <li><a href="#process">Quy trình</a></li>
+      <li><a href="#qr-section">Truy xuất QR</a></li>
+      <li><a href="#challenges">Thách thức</a></li>
+    </ul>
+    <button class="btn-primary" style="font-size:.85rem;padding:.5rem 1.2rem"
+      onclick="document.getElementById('qr-section').scrollIntoView({behavior:'smooth'})">
+      Khám phá ngay
+    </button>
+  </nav>
+
+  <!-- ═══════════════ HERO ═══════════════ -->
+  <section id="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-grid"></div>
+    <div class="particles"></div>
+
+    <!-- Decorative floating orbs -->
+    <div
+      style="position:absolute;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(22,163,74,.15),transparent);top:10%;left:-100px;pointer-events:none">
+    </div>
+    <div
+      style="position:absolute;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(29,78,216,.1),transparent);bottom:-100px;right:-150px;pointer-events:none">
+    </div>
+
+    <div class="hero-content">
+      <div class="hero-badge">🇻🇳 Chương trình Chuyển đổi số Nông nghiệp Quốc gia</div>
+      <h1 class="hero-title">
+        Hợp tác xã 4.0:<br>
+        <span>Chuẩn hóa Chuỗi Cung ứng</span><br>Nông sản Việt Nam
+      </h1>
+      <p class="hero-sub">
+        Kết nối nông dân – siêu thị – người tiêu dùng qua nền tảng IoT & Blockchain.
+        Loại bỏ trung gian, minh bạch giá cả, truy xuất nguồn gốc tức thì.
+      </p>
+      <div class="hero-cta">
+        <button class="btn-primary" onclick="document.getElementById('compare').scrollIntoView({behavior:'smooth'})">
+          🔍 Xem So sánh Mô hình
+        </button>
+        <button class="btn-outline" onclick="document.getElementById('process').scrollIntoView({behavior:'smooth'})">
+          📋 Quy trình Cánh đồng → Bàn ăn
+        </button>
+      </div>
+      <div class="floating-stats">
+        <div class="stat-card">
+          <div class="val"><span data-count="40" data-suffix="%">0%</span></div>
+          <div class="lbl">Giảm chi phí trung gian</div>
+        </div>
+        <div class="stat-card">
+          <div class="val"><span data-count="3" data-suffix=" khâu">0 khâu</span></div>
+          <div class="lbl">Chuỗi rút ngắn còn</div>
+        </div>
+        <div class="stat-card">
+          <div class="val"><span data-count="100" data-suffix="%">0%</span></div>
+          <div class="lbl">Minh bạch nguồn gốc</div>
+        </div>
+        <div class="stat-card">
+          <div class="val"><span data-count="2.5" data-suffix="x">0x</span></div>
+          <div class="lbl">Tăng thu nhập nông dân</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ COMPARE SECTION ═══════════════ -->
+  <section id="compare">
+    <div class="compare-wrapper">
+      <div class="section-header">
+        <div class="section-label">⚖️ So sánh Mô hình</div>
+        <h2 class="section-title">Truyền thống vs <span style="color:var(--green-light)">HTX 4.0</span></h2>
+        <p class="section-sub">Kéo thanh toggle để thấy sự khác biệt rõ rệt giữa hai mô hình chuỗi cung ứng</p>
+      </div>
+
+      <!-- Toggle Bar -->
+      <div class="toggle-bar">
+        <span class="toggle-label old">⛔ Truyền thống</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="modeToggle">
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+        <span class="toggle-label new">✅ HTX 4.0</span>
+      </div>
+
+      <!-- Chain Display -->
+      <div class="chain-display" id="chainDisplay">
+        <!-- SVG data lines (visible in HTX mode) -->
+        <div class="data-lines" id="dataLines" style="position:absolute;inset:0;pointer-events:none">
+          <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="dg" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#16a34a" />
+                <stop offset="100%" stop-color="#1d4ed8" />
+              </linearGradient>
+            </defs>
+            <line class="data-line" x1="10%" y1="50%" x2="50%" y2="30%" style="stroke:url(#dg)" />
+            <line class="data-line" x1="50%" y1="30%" x2="90%" y2="50%" style="stroke:url(#dg)"
+              stroke-dashoffset="12" />
+            <circle cx="10%" cy="50%" r="4" fill="#16a34a" opacity=".8" />
+            <circle cx="50%" cy="30%" r="4" fill="#0d9488" opacity=".8" />
+            <circle cx="90%" cy="50%" r="4" fill="#1d4ed8" opacity=".8" />
+          </svg>
+        </div>
+
+        <!-- Supply Chain Nodes -->
+        <div class="chain-nodes">
+          <!-- Permanent: Farmer -->
+          <div class="chain-node danger" id="nodeNd">
+            <span class="icon">👨‍🌾</span>
+            <span class="name">Nông dân<br><small style="color:#fca5a5;font-size:.65rem">/ HTX</small></span>
+          </div>
+          <span class="chain-arrow">→</span>
+
+          <!-- Middle (hidden in HTX mode) -->
+          <div class="chain-node danger middle" id="nodeTl">
+            <span class="icon">🤝</span>
+            <span class="name">Thương lái</span>
+          </div>
+          <span class="chain-arrow middle">→</span>
+
+          <div class="chain-node danger middle" id="nodeVx">
+            <span class="icon">🏚️</span>
+            <span class="name">Vựa<br>thu mua</span>
+          </div>
+          <span class="chain-arrow middle">→</span>
+
+          <div class="chain-node danger middle" id="nodeCdm">
+            <span class="icon">🏟️</span>
+            <span class="name">Chợ<br>đầu mối</span>
+          </div>
+          <span class="chain-arrow middle">→</span>
+
+          <div class="chain-node danger middle" id="nodeCbl">
+            <span class="icon">🛒</span>
+            <span class="name">Chợ<br>bán lẻ</span>
+          </div>
+          <span class="chain-arrow middle">→</span>
+
+          <!-- Permanent: Consumer -->
+          <div class="chain-node danger" id="nodeNtd">
+            <span class="icon">👨‍👩‍👧</span>
+            <span class="name">Người<br>tiêu dùng</span>
+          </div>
+        </div>
+
+        <!-- HTX middle node (shown only in HTX mode, hidden by default) -->
+        <div id="htxMiddle"
+          style="display:none;justify-content:center;align-items:center;gap:.5rem;margin-top:1rem;position:relative;z-index:2">
+          <div class="chain-node safe" style="background:rgba(13,148,136,.15);border-color:rgba(13,148,136,.5)">
+            <span class="icon">🏪</span>
+            <span class="name">Siêu thị /<br>Sàn TMĐT</span>
+          </div>
+        </div>
+
+        <!-- Warning Tags -->
+        <div class="warning-tags" id="warningTags">
+          <span class="warning-tag bad">⚠ Ép giá</span>
+          <span class="warning-tag bad">📈 Chi phí đội lên</span>
+          <span class="warning-tag bad">❓ Mất nguồn gốc</span>
+          <span class="warning-tag bad">⏰ Thời gian dài</span>
+        </div>
+      </div>
+
+      <!-- Info below -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:2rem" class="compare-info">
+        <div
+          style="padding:1.5rem;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:12px">
+          <h4 style="color:#fca5a5;margin-bottom:.75rem">⛔ Mô hình Truyền thống</h4>
+          <ul style="color:var(--text-muted);font-size:.85rem;line-height:2;list-style:none">
+            <li>• 5–6 khâu trung gian</li>
+            <li>• Nông dân bán giá thấp nhất</li>
+            <li>• Người dùng mua giá cao nhất</li>
+            <li>• Không có truy xuất nguồn gốc</li>
+          </ul>
+        </div>
+        <div
+          style="padding:1.5rem;background:rgba(22,163,74,.06);border:1px solid rgba(22,163,74,.2);border-radius:12px">
+          <h4 style="color:var(--green-light);margin-bottom:.75rem">✅ Mô hình HTX 4.0</h4>
+          <ul style="color:var(--text-muted);font-size:.85rem;line-height:2;list-style:none">
+            <li>• Chỉ 2–3 khâu: HTX → Siêu thị → Dùng</li>
+            <li>• Nông dân nhận giá công bằng</li>
+            <li>• Người tiêu dùng mua giá tốt hơn</li>
+            <li>• Blockchain truy xuất 100% minh bạch</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ PROCESS SECTION ═══════════════ -->
+  <section id="process">
+    <div class="section-header">
+      <div class="section-label">🛤️ Hành trình</div>
+      <h2 class="section-title">Từ Cánh đồng đến <span style="color:var(--green-light)">Bàn ăn</span></h2>
+      <p class="section-sub">Cuộn xuống để khám phá từng giai đoạn trong quy trình HTX 4.0</p>
+    </div>
+
+    <div class="process-steps">
+
+      <!-- Step 1: Field -->
+      <div class="process-step">
+        <div class="step-icon-wrap" style="position:relative;overflow:visible">
+          <span style="font-size:2rem">🌾</span>
+          <span class="step-num">1</span>
+          <!-- Drone animation element -->
+          <div id="droneEl" style="position:absolute;top:-60px;left:-80px;font-size:2rem;pointer-events:none">🚁</div>
+        </div>
+        <div class="step-body">
+          <h3>Giai đoạn 1 – Tại Cánh đồng</h3>
+          <p>
+            Drone tự động bay theo lịch, phun thuốc đúng liều lượng. Cảm biến đất nhấp nháy gửi dữ liệu
+            <strong style="color:var(--blue-light)">độ ẩm, pH, nhiệt độ</strong> về ứng dụng smartphone theo thời gian
+            thực.
+            Mọi dữ liệu canh tác được ghi nhận lên Blockchain, đảm bảo tính minh bạch.
+          </p>
+          <div class="step-tags">
+            <span class="step-tag">🚁 Drone tự động</span>
+            <span class="step-tag">📡 Cảm biến IoT</span>
+            <span class="step-tag">📱 App giám sát</span>
+            <span class="step-tag">🔗 Ghi Blockchain</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Logistics -->
+      <div class="process-step" style="transition-delay:.1s">
+        <div class="step-icon-wrap">
+          <span style="font-size:2rem">🏭</span>
+          <span class="step-num">2</span>
+        </div>
+        <div class="step-body">
+          <h3>Giai đoạn 2 – Sơ chế & Logistics</h3>
+          <p>
+            Nông sản sau thu hoạch được đưa vào <strong style="color:var(--blue-light)">kho mát tự động</strong>.
+            Xe tải lạnh <em>(Cold Chain)</em> vận chuyển ngay, duy trì nhiệt độ 2–8°C,
+            đảm bảo nông sản tươi nguyên. Toàn bộ hành trình được GPS tracking trực tiếp.
+          </p>
+          <div class="step-tags">
+            <span class="step-tag">🏭 Kho lạnh tự động</span>
+            <span class="step-tag">🚛 Cold Chain</span>
+            <span class="step-tag">📍 GPS Tracking</span>
+            <span class="step-tag">🌡️ Kiểm soát nhiệt độ</span>
+          </div>
+          <!-- Cold chain truck visual -->
+          <div
+            style="margin-top:1rem;padding:1rem;background:rgba(29,78,216,.08);border:1px solid rgba(29,78,216,.2);border-radius:10px;overflow:hidden;position:relative;height:56px">
+            <div
+              style="position:absolute;top:50%;transform:translateY(-50%);animation:droneFly 3s linear infinite;white-space:nowrap;font-size:1.8rem">
+              🚛❄️
+            </div>
+            <div
+              style="position:absolute;right:1rem;top:50%;transform:translateY(-50%);font-size:.75rem;color:var(--blue-light)">
+              🌡️ 4°C &nbsp;|&nbsp; ✅ Đạt chuẩn
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Market -->
+      <div class="process-step" style="transition-delay:.2s">
+        <div class="step-icon-wrap">
+          <span style="font-size:2rem">🛒</span>
+          <span class="step-num">3</span>
+        </div>
+        <div class="step-body">
+          <h3>Giai đoạn 3 – Tại Bàn ăn</h3>
+          <p>
+            Nông sản xuất hiện trên kệ siêu thị hoặc sàn thương mại điện tử.
+            Người tiêu dùng <strong style="color:var(--green-light)">quét mã QR</strong> là thấy ngay toàn bộ hành
+            trình:
+            từ hạt giống → thu hoạch → vận chuyển → bàn ăn. Niềm tin được xây dựng minh bạch.
+          </p>
+          <div class="step-tags">
+            <span class="step-tag">🏪 Siêu thị / Sàn TMĐT</span>
+            <span class="step-tag">📲 Quét QR</span>
+            <span class="step-tag">✅ Chứng nhận hữu cơ</span>
+            <span class="step-tag">💚 An toàn thực phẩm</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════ QR SECTION ═══════════════ -->
+  <section id="qr-section">
+    <div class="section-label"
+      style="display:inline-block;padding:.3rem 1rem;background:rgba(22,163,74,.15);border:1px solid rgba(22,163,74,.4);border-radius:99px;font-size:.8rem;color:var(--green-light);margin-bottom:1rem">
+      📲 Truy xuất Nguồn gốc</div>
+    <h2 class="section-title">Blockchain Truy xuất<br><span style="color:var(--green-light)">Tức thì & Minh bạch</span>
+    </h2>
+    <p class="section-sub" style="max-width:600px;margin:.75rem auto 0;color:var(--text-muted)">
+      Mỗi sản phẩm HTX 4.0 đều có mã QR gắn liền dữ liệu Blockchain không thể giả mạo.
+      Bấm để xem mô phỏng.
+    </p>
+    <br>
+    <button class="qr-btn" id="qrBtn">
+      <span>📱</span> Quét thử Mã QR Truy xuất
+    </button>
+  </section>
+
+  <!-- QR Modal -->
+  <div class="modal-overlay" id="qrModal">
+    <div class="phone-frame">
+      <div class="phone-status">
+        <span>9:41</span>
+        <span>📶 🔋</span>
+      </div>
+      <div class="phone-screen">
+        <div class="scan-anim">
+          <div style="font-size:.85rem;color:var(--text-muted);margin-bottom:.75rem">📷 Đang quét mã QR…</div>
+          <div class="qr-img">
+            <!-- Simple QR-like grid -->
+            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:2px;padding:8px;width:100%;height:100%">
+              <div style="background:#000;border-radius:2px"></div>
+              <div style="background:#fff"></div>
+              <div style="background:#000;border-radius:2px"></div>
+              <div style="background:#fff"></div>
+              <div style="background:#000;border-radius:2px"></div>
+              <div style="background:#000;border-radius:2px"></div>
+              <div style="background:#000;border-radius:2px"></div>
+              <div style="background:#fff"></div>
+              <div style="background:#000;border-radius:2px"></div>
+              <div style="background:#fff"></div>
+              <div style="background:#fff"></div>
+              <div style="background:#000;border-radius:2px"></div>
+              <div style="background:#000;border-radius:2px"></div>
+              <div style="background:#fff"></div>
+              <div style="background:#000;border-radius:2px"></div>
+              <div style="background:#000;border-radius:2px"></div>
+              <div style="background:#fff"></div>
+              <div style="background:#000;border-radius:2px"></div>
+              <div style="background:#000;border-radius:2px"></div>
+              <div style="background:#fff"></div>
+              <div style="background:#000;border-radius:2px"></div>
+              <div style="background:#000;border-radius:2px"></div>
+              <div style="background:#fff"></div>
+              <div style="background:#000;border-radius:2px"></div>
+              <div style="background:#000;border-radius:2px"></div>
+            </div>
+            <div class="scan-line"></div>
+          </div>
+          <div style="color:var(--green-light);font-size:.8rem;font-weight:700;animation:blink 1s infinite">✅ Đã xác
+            nhận – Hợp lệ</div>
+        </div>
+
+        <div class="trace-title">🔗 Lịch sử Blockchain</div>
+
+        <div class="trace-row"><span class="trace-key">🌾 Giống lúa</span><span class="trace-val">ST25 – Sóc
+            Trăng</span></div>
+        <div class="trace-row"><span class="trace-key">📅 Ngày gieo sạ</span><span class="trace-val">12/11/2025</span>
+        </div>
+        <div class="trace-row"><span class="trace-key">🧪 Phân bón</span><span class="trace-val">Hữu cơ vi sinh</span>
+        </div>
+        <div class="trace-row"><span class="trace-key">💧 Tưới tiêu</span><span class="trace-val">Hệ thống IoT tự
+            động</span></div>
+        <div class="trace-row"><span class="trace-key">🚜 Ngày thu hoạch</span><span class="trace-val">08/02/2026</span>
+        </div>
+        <div class="trace-row"><span class="trace-key">🏭 Đơn vị sơ chế</span><span class="trace-val">HTX Lúa Vàng Sóc
+            Trăng</span></div>
+        <div class="trace-row"><span class="trace-key">🚛 Vận chuyển</span><span class="trace-val">Xe lạnh – 4°C</span>
+        </div>
+        <div class="trace-row"><span class="trace-key">✅ Chứng nhận</span><span class="trace-val">VietGAP +
+            Organic</span></div>
+
+        <div class="blockchain-badge">
+          🔐 Hash: 0x4f8a…d91c &nbsp;|&nbsp; Block #1,847,291
+        </div>
+
+        <button class="close-modal" id="closeQR">✕ Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ CHALLENGE CARDS ═══════════════ -->
+  <section id="challenges">
+    <div class="section-header">
+      <div class="section-label">🧩 Thách thức & Giải pháp</div>
+      <h2 class="section-title">Hover để xem <span style="color:var(--green-light)">Lời giải</span></h2>
+      <p class="section-sub">Những rào cản thực tế và cách HTX 4.0 vượt qua từng thách thức</p>
+    </div>
+
+    <div class="cards-grid">
+      <!-- Card 1 -->
+      <div class="flip-card">
+        <div class="flip-inner">
+          <div class="flip-front">
+            <div class="card-icon">💸</div>
+            <h3>Chi phí Công nghệ Cao</h3>
+            <p>Drone, IoT, phần mềm... nông dân nhỏ lẻ khó tiếp cận</p>
+          </div>
+          <div class="flip-back">
+            <h3>💡 Hỗ trợ Vốn & Thuê thiết bị</h3>
+            <p>HTX đứng ra vay vốn ưu đãi tập thể, thiết bị dùng chung theo mô hình thuê-dùng. Chi phí mỗi hộ giảm 70%.
+            </p>
+            <span class="solution-badge">✅ Vốn ưu đãi 0% lãi suất</span>
+          </div>
+        </div>
+      </div>
+      <!-- Card 2 -->
+      <div class="flip-card">
+        <div class="flip-inner">
+          <div class="flip-front">
+            <div class="card-icon">👴</div>
+            <h3>Rào cản Tuổi tác</h3>
+            <p>Nông dân lớn tuổi khó thích nghi với smartphone, app, hệ thống số</p>
+          </div>
+          <div class="flip-back">
+            <h3>💡 Cầm tay chỉ việc</h3>
+            <p>Đội ngũ hỗ trợ trực tiếp tại đồng ruộng. App thiết kế giao diện đơn giản. Đường dây hotline 24/7 bằng
+              tiếng địa phương.</p>
+            <span class="solution-badge">✅ Hỗ trợ tận nơi</span>
+          </div>
+        </div>
+      </div>
+      <!-- Card 3 -->
+      <div class="flip-card">
+        <div class="flip-inner">
+          <div class="flip-front">
+            <div class="card-icon">📜</div>
+            <h3>Tính tuân thủ Hợp đồng</h3>
+            <p>Khi giá thị trường cao, một số nông dân phá vỡ hợp đồng bán ngoài</p>
+          </div>
+          <div class="flip-back">
+            <h3>💡 Nâng cấp Tư duy Chữ Tín</h3>
+            <p>Hợp đồng Smart Contract trên Blockchain – tự động thanh toán, tự động phạt. Xây dựng uy tín dài hạn cho
+              cả HTX và thành viên.</p>
+            <span class="solution-badge">✅ Smart Contract tự động</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ FOOTER ═══════════════ -->
+  <footer>
+    <div class="footer-logo">🌾 HTX 4.0 Vietnam</div>
+    <p style="margin-bottom:.5rem">Mô hình liên kết chuỗi – Từ Cánh đồng đến Bàn ăn</p>
+    <p>IoT · Blockchain · Chuyển đổi số Nông nghiệp</p>
+    <div style="margin-top:1.5rem;display:flex;gap:1rem;justify-content:center;flex-wrap:wrap">
+      <span
+        style="padding:.3rem .9rem;background:rgba(22,163,74,.1);border:1px solid rgba(22,163,74,.2);border-radius:99px;font-size:.75rem;color:var(--green-light)">🇻🇳
+        Made in Vietnam</span>
+      <span
+        style="padding:.3rem .9rem;background:rgba(29,78,216,.1);border:1px solid rgba(29,78,216,.2);border-radius:99px;font-size:.75rem;color:var(--blue-light)">🔗
+        Blockchain Powered</span>
+      <span
+        style="padding:.3rem .9rem;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);border-radius:99px;font-size:.75rem;color:#fbbf24">🏆
+        VietGAP Certified</span>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+
+  <script>
+    /* Extra: Toggle HTX middle node visibility */
+    (function () {
+      const toggle = document.getElementById('modeToggle');
+      const htxMiddle = document.getElementById('htxMiddle');
+      if (!toggle || !htxMiddle) return;
+      toggle.addEventListener('change', function () {
+        htxMiddle.style.display = this.checked ? 'flex' : 'none';
+      });
+    })();
+  </script>
+
+</body>
+
+</html>
