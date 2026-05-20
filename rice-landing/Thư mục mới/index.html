@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTX 4.0 – Chuẩn hóa Chuỗi Cung ứng</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM (Production UMD) -->
+    <script src="https://unpkg.com/react@18.2.0/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js" crossorigin></script>
+    
+    <!-- Framer Motion (v10 for stable window.Motion) -->
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    
+    <!-- Babel Standalone -->
+    <script src="https://unpkg.com/@babel/standalone@7.23.6/babel.min.js"></script>
+
+    <!-- New Modern Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        heading: ['"Space Grotesk"', 'sans-serif'],
+                        body: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    borderRadius: {
+                        DEFAULT: "9999px",
+                    },
+                    colors: {
+                        green: {
+                            light: '#4ade80',
+                            DEFAULT: '#16a34a',
+                            dark: '#14532d'
+                        },
+                        blue: {
+                            light: '#60a5fa',
+                            DEFAULT: '#1d4ed8'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #020617; /* Dark slate instead of pure black */
+            color: #f8fafc;
+            margin: 0;
+            overflow-x: hidden;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        /* Beautiful Fallback Gradients */
+        .bg-mesh-hero {
+            background-color: #020617;
+            background-image: 
+                radial-gradient(circle at 15% 30%, rgba(22, 163, 74, 0.25) 0%, transparent 40%),
+                radial-gradient(circle at 85% 20%, rgba(29, 78, 216, 0.2) 0%, transparent 40%),
+                radial-gradient(circle at 50% 80%, rgba(13, 148, 136, 0.2) 0%, transparent 50%);
+            animation: pulseBg 15s ease-in-out infinite alternate;
+        }
+
+        .bg-mesh-content {
+            background-color: #020617;
+            background-image: 
+                radial-gradient(circle at 80% 80%, rgba(22, 163, 74, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 20% 80%, rgba(29, 78, 216, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 50% 10%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+        }
+
+        @keyframes pulseBg {
+            0% { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(15deg); }
+        }
+
+        .liquid-glass {
+            background: rgba(255, 255, 255, 0.03);
+            background-blend-mode: luminosity;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .liquid-glass-strong {
+            background: rgba(255, 255, 255, 0.05);
+            background-blend-mode: luminosity;
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        @keyframes scanLine {
+            0% { top: 0; }
+            50% { top: 100%; }
+            100% { top: 0; }
+        }
+        .scan-line {
+            position: absolute;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: #4ade80;
+            box-shadow: 0 0 12px #4ade80;
+            animation: scanLine 2s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body>
+    <div id="root">
+        <div style="display: flex; height: 100vh; width: 100%; align-items: center; justify-content: center; background: #020617; color: #fff;">
+            Đang tải ứng dụng... (Loading)
+        </div>
+    </div>
+
+    <script type="text/babel">
+        const Motion = window.Motion;
+        if (!Motion) console.error("Framer Motion did not load correctly.");
+        const { motion, AnimatePresence, useInView } = Motion;
+        const { useState, useEffect, useRef } = React;
+
+        // -------------------------------------------------------------
+        // UI COMPONENTS
+        // -------------------------------------------------------------
+        const ArrowUpRight = ({ className }) => (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <path d="M7 17L17 7M7 7h10v10" />
+            </svg>
+        );
+
+        const FadingVideo = ({ src, className, style, opacity = 1 }) => {
+            const videoRef = useRef(null);
+            const rafId = useRef(null);
+            const fadingOutRef = useRef(false);
+            const FADE_MS = 500;
+            const FADE_OUT_LEAD = 0.55;
+
+            const fadeTo = (targetOpacity, duration) => {
+                if (rafId.current) cancelAnimationFrame(rafId.current);
+                const video = videoRef.current;
+                if (!video) return;
+                const startOpacity = parseFloat(video.style.opacity) || 0;
+                const startTime = performance.now();
+                const animate = (currentTime) => {
+                    const elapsed = currentTime - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    video.style.opacity = startOpacity + (targetOpacity - startOpacity) * progress;
+                    if (progress < 1) rafId.current = requestAnimationFrame(animate);
+                };
+                rafId.current = requestAnimationFrame(animate);
+            };
+
+            const handleLoadedData = () => {
+                if(videoRef.current) {
+                    videoRef.current.style.opacity = 0;
+                    videoRef.current.play().catch(e => console.log("Autoplay blocked", e));
+                    fadeTo(opacity, FADE_MS);
+                }
+            };
+
+            const handleTimeUpdate = () => {
+                const video = videoRef.current;
+                if (!video) return;
+                const remaining = video.duration - video.currentTime;
+                if (!fadingOutRef.current && remaining <= FADE_OUT_LEAD && remaining > 0) {
+                    fadingOutRef.current = true;
+                    fadeTo(0, FADE_MS);
+                }
+            };
+
+            const handleEnded = () => {
+                if(videoRef.current) {
+                    videoRef.current.style.opacity = 0;
+                    setTimeout(() => {
+                        if (!videoRef.current) return;
+                        videoRef.current.currentTime = 0;
+                        videoRef.current.play().catch(e => console.log("Replay failed", e));
+                        fadingOutRef.current = false;
+                        fadeTo(opacity, FADE_MS);
+                    }, 100);
+                }
+            };
+
+            useEffect(() => {
+                return () => rafId.current && cancelAnimationFrame(rafId.current);
+            }, []);
+
+            return (
+                <video
+                    ref={videoRef}
+                    src={src}
+                    className={className}
+                    style={{ ...style, opacity: 0, transition: 'opacity 0.5s' }}
+                    muted
+                    playsInline
+                    preload="auto"
+                    onLoadedData={handleLoadedData}
+                    onTimeUpdate={handleTimeUpdate}
+                    onEnded={handleEnded}
+                    onError={(e) => {
+                        // If video fails, it stays at opacity 0, revealing the CSS gradient behind it!
+                        console.warn("Video failed to load, falling back to gradient.", e);
+                    }}
+                />
+            );
+        };
+
+        const BlurText = ({ text, className }) => {
+            const ref = useRef(null);
+            const isInView = useInView ? useInView(ref, { amount: 0.1, once: true }) : true;
+            const words = text.split(" ");
+
+            return (
+                <p ref={ref} className={`flex flex-wrap justify-center ${className}`} style={{ rowGap: '0.1em' }}>
+                    {words.map((word, i) => (
+                        <motion.span
+                            key={i}
+                            initial={{ filter: 'blur(10px)', opacity: 0, y: 30 }}
+                            animate={isInView ? {
+                                filter: ['blur(10px)', 'blur(5px)', 'blur(0px)'],
+                                opacity: [0, 0.5, 1],
+                                y: [30, -5, 0]
+                            } : {}}
+                            transition={{
+                                duration: 0.7,
+                                times: [0, 0.5, 1],
+                                ease: "easeOut",
+                                delay: (i * 80) / 1000
+                            }}
+                            style={{ display: 'inline-block', marginRight: '0.28em' }}
+                        >
+                            {word}
+                        </motion.span>
+                    ))}
+                </p>
+            );
+        };
+
+        const AnimatedCounter = ({ target, suffix = "" }) => {
+            const [count, setCount] = useState(0);
+            const ref = useRef(null);
+            const inView = useInView(ref, { once: true });
+
+            useEffect(() => {
+                if (inView) {
+                    let startTime;
+                    const duration = 1500;
+                    const animate = (time) => {
+                        if (!startTime) startTime = time;
+                        const progress = Math.min((time - startTime) / duration, 1);
+                        setCount(progress * target);
+                        if (progress < 1) requestAnimationFrame(animate);
+                    };
+                    requestAnimationFrame(animate);
+                }
+            }, [inView, target]);
+
+            return (
+                <span ref={ref}>
+                    {Number.isInteger(target) ? Math.round(count) : count.toFixed(1)}{suffix}
+                </span>
+            );
+        };
+
+        // -------------------------------------------------------------
+        // SECTIONS
+        // -------------------------------------------------------------
+        const Navbar = () => (
+            <nav className="fixed top-4 left-0 right-0 px-4 md:px-8 lg:px-16 z-50 flex items-center justify-between">
+                <div className="liquid-glass rounded-full px-5 py-2.5 flex items-center justify-center font-heading font-bold tracking-tight text-xl text-white">
+                    🌾 HTX 4.0
+                </div>
+                <div className="hidden lg:flex liquid-glass rounded-full px-1.5 py-1.5 items-center gap-1">
+                    {['So sánh', 'Quy trình', 'Truy xuất', 'Thách thức'].map(link => (
+                        <a key={link} href={`#${link.toLowerCase()}`} className="px-5 py-2 text-sm font-medium text-white/80 hover:text-white transition-colors">
+                            {link}
+                        </a>
+                    ))}
+                    <button 
+                        onClick={() => document.getElementById('truy xuất')?.scrollIntoView({behavior: 'smooth'})}
+                        className="bg-green-500 hover:bg-green-400 text-black px-6 py-2.5 rounded-full text-sm font-bold flex items-center gap-2 whitespace-nowrap ml-2 transition-colors">
+                        Khám phá ngay <ArrowUpRight className="w-4 h-4" />
+                    </button>
+                </div>
+                <div className="w-12 h-12 lg:hidden" />
+            </nav>
+        );
+
+        const Hero = () => (
+            <section className="relative min-h-screen w-full bg-mesh-hero overflow-hidden flex flex-col">
+                <FadingVideo 
+                    src="https://cdn.pixabay.com/video/2021/08/04/83866-584705190_large.mp4"
+                    className="absolute left-1/2 top-0 -translate-x-1/2 object-cover object-top z-0 mix-blend-screen"
+                    style={{ width: "120%", height: "120%" }}
+                    opacity={0.4} 
+                />
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#020617] z-0"></div>
+
+                <div className="relative z-10 flex-1 flex flex-col items-center justify-center pt-32 pb-20 px-4 text-center">
+                    <motion.div 
+                        initial={{ filter: "blur(10px)", opacity: 0, y: 20 }}
+                        animate={{ filter: "blur(0px)", opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+                        className="liquid-glass rounded-full p-1.5 pr-4 flex items-center gap-3 mb-8"
+                    >
+                        <span className="bg-green-500 text-black px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded-full">Kinh tế học đại cương</span>
+                        <span className="text-sm text-white/90 font-medium">Mô hình liên kết chuỗi</span>
+                    </motion.div>
+                    
+                    <BlurText 
+                        text="Hợp tác xã 4.0: Chuẩn hóa Chuỗi Cung ứng"
+                        className="text-5xl md:text-6xl lg:text-7xl font-heading font-bold text-white leading-[1.05] max-w-4xl tracking-tight"
+                    />
+                    
+                    <motion.p
+                        initial={{ filter: "blur(10px)", opacity: 0, y: 20 }}
+                        animate={{ filter: "blur(0px)", opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, delay: 0.6, ease: "easeOut" }}
+                        className="mt-6 text-base md:text-lg text-white/70 max-w-2xl font-light leading-relaxed"
+                    >
+                        Kết nối nông dân – siêu thị – người tiêu dùng qua nền tảng IoT & Blockchain. 
+                        Loại bỏ trung gian, minh bạch giá cả, truy xuất nguồn gốc tức thì.
+                    </motion.p>
+                    
+                    <motion.div 
+                        initial={{ filter: "blur(10px)", opacity: 0, y: 20 }}
+                        animate={{ filter: "blur(0px)", opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, delay: 0.8, ease: "easeOut" }}
+                        className="flex flex-wrap items-center justify-center gap-4 mt-10"
+                    >
+                        <button 
+                            onClick={() => document.getElementById('so sánh')?.scrollIntoView({behavior: 'smooth'})}
+                            className="bg-white hover:bg-gray-100 text-black rounded-full px-8 py-3.5 text-sm font-bold flex items-center gap-2 transition-colors">
+                            🔍 Xem So sánh Mô hình
+                        </button>
+                        <button 
+                            onClick={() => document.getElementById('quy trình')?.scrollIntoView({behavior: 'smooth'})}
+                            className="liquid-glass rounded-full px-8 py-3.5 text-sm font-bold text-white flex items-center gap-2 hover:bg-white/10 transition-colors">
+                            📋 Hành trình Cánh đồng → Bàn ăn
+                        </button>
+                    </motion.div>
+
+                    <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, delay: 1.0, ease: "easeOut" }}
+                        className="flex flex-wrap justify-center gap-4 mt-16"
+                    >
+                        {[
+                            { val: 40, suf: "%", lbl: "Giảm chi phí trung gian" },
+                            { val: 3, suf: " khâu", lbl: "Chuỗi rút ngắn còn" },
+                            { val: 100, suf: "%", lbl: "Minh bạch nguồn gốc" },
+                            { val: 2.5, suf: "x", lbl: "Tăng thu nhập nông dân" }
+                        ].map((stat, i) => (
+                            <div key={i} className="liquid-glass p-5 w-[160px] md:w-[220px] rounded-[1.5rem] text-center flex flex-col justify-center">
+                                <div className="text-4xl md:text-5xl font-heading font-bold text-green-light tracking-tight leading-none mb-3">
+                                    <AnimatedCounter target={stat.val} suffix={stat.suf} />
+                                </div>
+                                <div className="text-[11px] md:text-xs text-white/60 font-semibold uppercase tracking-[0.1em]">{stat.lbl}</div>
+                            </div>
+                        ))}
+                    </motion.div>
+                </div>
+            </section>
+        );
+
+        const CompareSection = () => {
+            const [isHTX, setIsHTX] = useState(false);
+
+            const Node = ({ icon, name, safe, danger }) => (
+                <div className={`liquid-glass flex flex-col items-center justify-center gap-3 p-5 rounded-3xl min-w-[100px] md:min-w-[130px] text-center transition-colors duration-500
+                    ${safe ? '!bg-green-500/10 border !border-green-500/30' : ''}
+                    ${danger ? '!bg-red-500/10 border !border-red-500/30' : ''}
+                `}>
+                    <span className="text-4xl">{icon}</span>
+                    <span className="text-[11px] md:text-sm font-semibold text-white/90 leading-tight" dangerouslySetInnerHTML={{__html: name}}></span>
+                </div>
+            );
+
+            return (
+                <section id="so sánh" className="relative min-h-screen py-24 px-4 md:px-8 flex flex-col items-center z-10">
+                    <div className="text-center mb-16">
+                        <span className="text-xs font-bold text-green-light mb-4 block uppercase tracking-[0.2em]">// So sánh Mô hình</span>
+                        <h2 className="font-heading font-bold text-white text-4xl md:text-5xl lg:text-6xl tracking-tight">
+                            Truyền thống vs <span className="text-green-light">HTX 4.0</span>
+                        </h2>
+                    </div>
+
+                    <div className="flex items-center gap-6 mb-12 liquid-glass px-6 py-3 rounded-full">
+                        <span className={`font-bold text-sm tracking-wide ${!isHTX ? 'text-red-400' : 'text-white/40'}`}>⛔ Truyền thống</span>
+                        <div 
+                            className={`w-16 h-8 rounded-full cursor-pointer p-1 relative flex items-center transition-colors duration-500 ${isHTX ? 'bg-green-500' : 'bg-red-500'}`}
+                            onClick={() => setIsHTX(!isHTX)}
+                        >
+                            <motion.div 
+                                className="w-6 h-6 rounded-full bg-white shadow-md absolute"
+                                animate={{ left: isHTX ? '34px' : '4px' }}
+                                transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                            />
+                        </div>
+                        <span className={`font-bold text-sm tracking-wide ${isHTX ? 'text-green-400' : 'text-white/40'}`}>✅ HTX 4.0</span>
+                    </div>
+
+                    <div className="w-full max-w-6xl liquid-glass rounded-[2.5rem] p-6 md:p-12 overflow-hidden border border-white/10">
+                        <div className="flex flex-wrap lg:flex-nowrap items-center justify-center gap-2 md:gap-4 relative min-h-[140px]">
+                            <Node icon="👨‍🌾" name="Nông dân<br/><span class='text-[10px] text-white/50 font-normal'>/ Cánh đồng</span>" safe={isHTX} danger={!isHTX} />
+                            
+                            <AnimatePresence mode="popLayout">
+                                {!isHTX && (
+                                    <motion.div 
+                                        key="old-chain"
+                                        initial={{ opacity: 0, scale: 0.8 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 0.8 }}
+                                        transition={{ duration: 0.4 }}
+                                        className="flex flex-wrap lg:flex-nowrap items-center justify-center gap-2 md:gap-4"
+                                    >
+                                        <span className="text-white/30 text-xl">→</span>
+                                        <Node icon="🤝" name="Thương lái" danger />
+                                        <span className="text-white/30 text-xl hidden md:inline">→</span>
+                                        <Node icon="🏚️" name="Vựa<br/>thu mua" danger />
+                                        <span className="text-white/30 text-xl hidden md:inline">→</span>
+                                        <Node icon="🏟️" name="Chợ<br/>đầu mối" danger />
+                                        <span className="text-white/30 text-xl hidden lg:inline">→</span>
+                                        <Node icon="🛒" name="Chợ<br/>bán lẻ" danger />
+                                        <span className="text-white/30 text-xl">→</span>
+                                    </motion.div>
+                                )}
+                                {isHTX && (
+                                    <motion.div 
+                                        key="new-chain"
+                                        initial={{ opacity: 0, scale: 0.8 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 0.8 }}
+                                        transition={{ duration: 0.4 }}
+                                        className="flex items-center justify-center gap-4 mx-8"
+                                    >
+                                        <span className="text-green-400/50 text-2xl">→</span>
+                                        <Node icon="🏪" name="Siêu thị /<br/>Sàn TMĐT" safe />
+                                        <span className="text-green-400/50 text-2xl">→</span>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+
+                            <Node icon="👨‍👩‍👧" name="Người<br/>tiêu dùng" safe={isHTX} danger={!isHTX} />
+                        </div>
+
+                        <div className="flex flex-wrap justify-center gap-3 mt-16">
+                            <AnimatePresence mode="wait">
+                                {!isHTX ? (
+                                    <motion.div key="tags-old" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-10}} className="flex gap-3 flex-wrap justify-center">
+                                        {["⚠ Ép giá", "📈 Chi phí đội lên", "❓ Mất nguồn gốc", "⏰ Thời gian dài"].map(t => (
+                                            <span key={t} className="px-5 py-2 rounded-full text-xs font-bold tracking-wide bg-red-500/10 border border-red-500/30 text-red-400">{t}</span>
+                                        ))}
+                                    </motion.div>
+                                ) : (
+                                    <motion.div key="tags-new" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-10}} className="flex gap-3 flex-wrap justify-center">
+                                        {["✅ Giá minh bạch", "🔗 Blockchain truy xuất", "🚀 Chuỗi rút ngắn", "💚 Nông dân hưởng lợi"].map(t => (
+                                            <span key={t} className="px-5 py-2 rounded-full text-xs font-bold tracking-wide bg-green-500/10 border border-green-500/30 text-green-400">{t}</span>
+                                        ))}
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
+                    </div>
+                </section>
+            );
+        };
+
+        const ProcessSection = () => {
+            const steps = [
+                {
+                    icon: "🌾", num: 1, title: "Tại Cánh đồng",
+                    desc: "Drone tự động bay theo lịch, phun thuốc đúng liều lượng. Cảm biến đất nhấp nháy gửi dữ liệu độ ẩm, pH, nhiệt độ về ứng dụng smartphone. Mọi dữ liệu được ghi nhận lên Blockchain.",
+                    tags: ["🚁 Drone tự động", "📡 Cảm biến IoT", "📱 App giám sát", "🔗 Ghi Blockchain"]
+                },
+                {
+                    icon: "🏭", num: 2, title: "Sơ chế & Logistics",
+                    desc: "Nông sản sau thu hoạch đưa vào kho mát tự động. Xe tải lạnh vận chuyển ngay, duy trì nhiệt độ 2–8°C, đảm bảo tươi nguyên. Toàn bộ hành trình được GPS tracking.",
+                    tags: ["🏭 Kho lạnh tự động", "🚛 Cold Chain", "📍 GPS Tracking", "🌡️ Kiểm soát nhiệt độ"]
+                },
+                {
+                    icon: "🛒", num: 3, title: "Tại Bàn ăn",
+                    desc: "Nông sản xuất hiện trên kệ siêu thị hoặc sàn TMĐT. Người tiêu dùng quét mã QR là thấy ngay toàn bộ hành trình từ hạt giống đến bàn ăn. Niềm tin được xây dựng minh bạch.",
+                    tags: ["🏪 Siêu thị / Sàn TMĐT", "📲 Quét QR", "✅ Chứng nhận hữu cơ", "💚 An toàn thực phẩm"]
+                }
+            ];
+
+            return (
+                <section id="quy trình" className="relative py-24 px-4 md:px-8 max-w-7xl mx-auto z-10">
+                    <div className="text-center mb-16">
+                        <span className="text-xs font-bold text-green-light mb-4 block uppercase tracking-[0.2em]">// Hành trình</span>
+                        <h2 className="font-heading font-bold text-white text-4xl md:text-5xl lg:text-6xl tracking-tight">
+                            Từ Cánh đồng đến <span className="text-green-light">Bàn ăn</span>
+                        </h2>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+                        {steps.map((step, i) => (
+                            <motion.div 
+                                key={i}
+                                initial={{ opacity: 0, y: 40 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 0.7, delay: i * 0.15 }}
+                                className="liquid-glass rounded-[2rem] p-8 flex flex-col border border-white/5 hover:border-white/20 transition-colors"
+                            >
+                                <div className="flex items-center gap-5 mb-8">
+                                    <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center text-3xl relative border border-green-500/30 shadow-lg">
+                                        {step.icon}
+                                        <div className="absolute -top-2 -right-2 w-7 h-7 bg-green-500 rounded-full flex items-center justify-center text-xs font-bold text-black shadow-md">
+                                            {step.num}
+                                        </div>
+                                    </div>
+                                    <h3 className="font-heading font-bold text-white text-2xl tracking-tight">{step.title}</h3>
+                                </div>
+                                <p className="text-sm md:text-base text-white/60 font-light leading-relaxed mb-8 flex-1">
+                                    {step.desc}
+                                </p>
+                                <div className="flex flex-wrap gap-2 mt-auto">
+                                    {step.tags.map(tag => (
+                                        <span key={tag} className="px-3 py-1.5 rounded-full text-[11px] font-semibold bg-blue-500/10 border border-blue-500/30 text-blue-300">
+                                            {tag}
+                                        </span>
+                                    ))}
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
+                </section>
+            );
+        };
+
+        const QRSection = () => {
+            const [open, setOpen] = useState(false);
+
+            return (
+                <section id="truy xuất" className="relative py-32 px-4 text-center z-10">
+                    <span className="text-xs font-bold text-green-light mb-4 block uppercase tracking-[0.2em]">// Truy xuất Nguồn gốc</span>
+                    <h2 className="font-heading font-bold text-white text-4xl md:text-5xl lg:text-6xl tracking-tight mb-6">
+                        Blockchain Truy xuất<br/><span className="text-green-light">Tức thì & Minh bạch</span>
+                    </h2>
+                    <p className="text-white/60 max-w-xl mx-auto text-base font-light mb-10">
+                        Mỗi sản phẩm HTX 4.0 đều có mã QR gắn liền dữ liệu Blockchain không thể giả mạo. Bấm để xem mô phỏng.
+                    </p>
+                    <button 
+                        onClick={() => setOpen(true)}
+                        className="liquid-glass-strong rounded-full px-10 py-5 text-base font-bold tracking-wide text-white inline-flex items-center gap-3 hover:bg-white/10 transition"
+                    >
+                        <span className="text-2xl">📱</span> Quét QR Minh Họa
+                    </button>
+
+                    {/* QR Modal */}
+                    <AnimatePresence>
+                        {open && (
+                            <motion.div 
+                                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                                className="fixed inset-0 z-[1000] flex items-center justify-center bg-[#020617]/90 backdrop-blur-md p-4"
+                                onClick={(e) => { if(e.target === e.currentTarget) setOpen(false) }}
+                            >
+                                <motion.div 
+                                    initial={{ scale: 0.9, y: 30 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 30 }}
+                                    className="w-[340px] bg-[#0a1628] rounded-[3rem] border-[8px] border-[#222] shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col relative"
+                                    onClick={e => e.stopPropagation()}
+                                >
+                                    <div className="bg-[#111] px-8 py-3 flex justify-between text-[11px] font-bold text-gray-400">
+                                        <span>9:41</span>
+                                        <span className="tracking-widest">📶 🔋</span>
+                                    </div>
+                                    <div className="p-8 flex-1 text-left bg-gradient-to-b from-[#0a1628] to-[#020617]">
+                                        <div className="text-center mb-8">
+                                            <div className="text-xs font-medium text-white/50 mb-4 tracking-wider uppercase">📷 Đang quét mã...</div>
+                                            <div className="w-[160px] h-[160px] bg-white rounded-2xl mx-auto relative overflow-hidden flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.1)]">
+                                                <div className="grid grid-cols-5 gap-[3px] w-full h-full p-3">
+                                                    {Array.from({length: 25}).map((_, i) => (
+                                                        <div key={i} className={`rounded-sm ${Math.random() > 0.35 ? 'bg-black' : 'bg-transparent'}`}></div>
+                                                    ))}
+                                                </div>
+                                                <div className="scan-line"></div>
+                                            </div>
+                                            <div className="text-green-400 text-sm font-bold mt-6 flex justify-center items-center gap-2">
+                                                <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span> Đã xác nhận – Hợp lệ
+                                            </div>
+                                        </div>
+
+                                        <div className="text-green-400 font-bold text-sm tracking-wide mb-5 border-b border-white/10 pb-3">🔗 Lịch sử Blockchain</div>
+                                        
+                                        <div className="space-y-3 text-xs">
+                                            <div className="flex justify-between"><span className="text-white/50">🌾 Giống lúa</span><span className="font-bold text-white">ST25 – Sóc Trăng</span></div>
+                                            <div className="flex justify-between"><span className="text-white/50">📅 Ngày gieo sạ</span><span className="font-bold text-white">12/11/2025</span></div>
+                                            <div className="flex justify-between"><span className="text-white/50">🧪 Phân bón</span><span className="font-bold text-white">Hữu cơ vi sinh</span></div>
+                                            <div className="flex justify-between"><span className="text-white/50">🚜 Thu hoạch</span><span className="font-bold text-white">08/02/2026</span></div>
+                                            <div className="flex justify-between"><span className="text-white/50">✅ Chứng nhận</span><span className="font-bold text-white">VietGAP + Organic</span></div>
+                                        </div>
+
+                                        <div className="mt-8 bg-blue-500/10 border border-blue-500/30 rounded-xl p-3 text-[11px] font-mono text-blue-300 text-center break-all">
+                                            Hash: 0x4f8a…d91c<br/>Block #1,847,291
+                                        </div>
+
+                                        <button 
+                                            onClick={() => setOpen(false)}
+                                            className="w-full mt-6 py-3.5 liquid-glass rounded-2xl text-sm font-bold text-white hover:bg-white/10 transition"
+                                        >
+                                            ✕ Đóng
+                                        </button>
+                                    </div>
+                                </motion.div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </section>
+            );
+        };
+
+        const ChallengesSection = () => {
+            const cards = [
+                {
+                    icon: "💸", titleFront: "Chi phí Công nghệ", descFront: "Drone, IoT, phần mềm... nông dân nhỏ lẻ khó tiếp cận",
+                    titleBack: "Hỗ trợ Vốn & Thuê thiết bị", descBack: "HTX đứng ra vay vốn ưu đãi, thiết bị dùng chung. Chi phí giảm 70%.",
+                    badge: "Vốn ưu đãi 0%"
+                },
+                {
+                    icon: "👴", titleFront: "Rào cản Tuổi tác", descFront: "Nông dân lớn tuổi khó thích nghi với smartphone, app, hệ thống số",
+                    titleBack: "Cầm tay chỉ việc", descBack: "Đội ngũ hỗ trợ trực tiếp tại đồng ruộng. Hotline 24/7 bằng tiếng địa phương.",
+                    badge: "Hỗ trợ tận nơi"
+                },
+                {
+                    icon: "📜", titleFront: "Tính Tuân thủ", descFront: "Khi giá thị trường cao, nông dân dễ phá vỡ hợp đồng bán ngoài",
+                    titleBack: "Nâng cấp Tư duy", descBack: "Hợp đồng Smart Contract trên Blockchain tự động thanh toán, phạt. Xây dựng uy tín.",
+                    badge: "Smart Contract"
+                }
+            ];
+
+            return (
+                <section id="thách thức" className="relative py-24 px-4 md:px-8 max-w-6xl mx-auto z-10">
+                    <div className="text-center mb-16">
+                        <span className="text-xs font-bold text-green-light mb-4 block uppercase tracking-[0.2em]">// Thách thức & Giải pháp</span>
+                        <h2 className="font-heading font-bold text-white text-4xl md:text-5xl lg:text-6xl tracking-tight">
+                            Hover để xem <span className="text-green-light">Lời giải</span>
+                        </h2>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8" style={{ perspective: 1000 }}>
+                        {cards.map((card, i) => {
+                            const [isHovered, setIsHovered] = useState(false);
+                            return (
+                                <motion.div 
+                                    key={i}
+                                    initial={{ opacity: 0, y: 30 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true }}
+                                    transition={{ duration: 0.6, delay: i * 0.15 }}
+                                    className="relative h-[260px] cursor-pointer"
+                                    onMouseEnter={() => setIsHovered(true)}
+                                    onMouseLeave={() => setIsHovered(false)}
+                                >
+                                    <motion.div 
+                                        className="w-full h-full relative"
+                                        animate={{ rotateY: isHovered ? 180 : 0 }}
+                                        transition={{ duration: 0.8, type: "spring", stiffness: 150, damping: 20 }}
+                                        style={{ transformStyle: "preserve-3d" }}
+                                    >
+                                        {/* Front */}
+                                        <div className="absolute inset-0 liquid-glass rounded-[2rem] p-8 flex flex-col items-center justify-center text-center border !border-red-500/20" style={{ backfaceVisibility: "hidden" }}>
+                                            <div className="text-5xl mb-4">{card.icon}</div>
+                                            <h3 className="font-heading font-bold text-2xl text-red-300 mb-3 tracking-tight">{card.titleFront}</h3>
+                                            <p className="text-sm text-white/50 font-light leading-relaxed">{card.descFront}</p>
+                                        </div>
+
+                                        {/* Back */}
+                                        <div className="absolute inset-0 liquid-glass rounded-[2rem] p-8 flex flex-col items-center justify-center text-center border !border-green-500/30 !bg-green-900/20" style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}>
+                                            <div className="text-2xl mb-3">💡</div>
+                                            <h3 className="font-heading font-bold text-xl text-green-400 mb-3 tracking-tight">{card.titleBack}</h3>
+                                            <p className="text-[13px] text-white/70 font-light leading-relaxed mb-5">{card.descBack}</p>
+                                            <span className="px-4 py-1.5 rounded-full text-[11px] font-bold tracking-wide bg-green-500/20 text-green-300 border border-green-500/30">✅ {card.badge}</span>
+                                        </div>
+                                    </motion.div>
+                                </motion.div>
+                            )
+                        })}
+                    </div>
+                </section>
+            );
+        };
+
+        const Footer = () => (
+            <footer className="relative z-10 py-16 px-4 text-center border-t border-white/10 bg-[#020617]/80 backdrop-blur-xl mt-12">
+                <div className="font-heading font-bold tracking-tight text-3xl text-white mb-3">🌾 HTX 4.0 Vietnam</div>
+                <p className="text-white/60 text-sm font-medium mb-1">Mô hình liên kết chuỗi – Từ Cánh đồng đến Bàn ăn</p>
+                <p className="text-white/40 text-xs font-light tracking-wide mb-8">IoT · Blockchain · Chuyển đổi số Nông nghiệp</p>
+                
+                <div className="flex flex-wrap justify-center gap-4">
+                    <span className="px-4 py-2 liquid-glass rounded-full text-xs font-semibold tracking-wide text-green-400">🇻🇳 Made in Vietnam</span>
+                    <span className="px-4 py-2 liquid-glass rounded-full text-xs font-semibold tracking-wide text-blue-400">🔗 Blockchain Powered</span>
+                    <span className="px-4 py-2 liquid-glass rounded-full text-xs font-semibold tracking-wide text-yellow-400">🏆 VietGAP Certified</span>
+                </div>
+            </footer>
+        );
+
+        // -------------------------------------------------------------
+        // MAIN APP
+        // -------------------------------------------------------------
+        const App = () => (
+            <main className="no-scrollbar bg-[#020617] text-white selection:bg-green-500/30 selection:text-green-200">
+                <Navbar />
+                
+                {/* 1. Hero */}
+                <Hero />
+                
+                {/* 2. Content with Sticky Background */}
+                <div className="relative w-full">
+                    {/* Animated Mesh Gradient Background (Replaces Black/Video) */}
+                    <div className="absolute inset-0 z-0">
+                        <div className="sticky top-0 h-screen w-full bg-mesh-content"></div>
+                    </div>
+                    
+                    <div className="relative z-10">
+                        <CompareSection />
+                        <ProcessSection />
+                        <QRSection />
+                        <ChallengesSection />
+                        <Footer />
+                    </div>
+                </div>
+            </main>
+        );
+
+        try {
+            const root = ReactDOM.createRoot(document.getElementById('root'));
+            root.render(<App />);
+        } catch (e) {
+            console.error("Mounting failed", e);
+            document.getElementById('root').innerHTML = `<div style="padding: 20px; color: red; font-family: sans-serif;">Lỗi hiển thị: ${e.message}</div>`;
+        }
+    </script>
+</body>
+</html>
